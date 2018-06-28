@@ -13,6 +13,35 @@ from PIL import Image
 import imgaug as ia
 from imgaug import augmenters as iaa
 
+iaa_seq = iaa.Sequential([
+            iaa.PerspectiveTransform(scale=0.050),
+            iaa.Multiply((0.8, 1.2)),
+            iaa.Affine(
+                scale={"x":(1, 1.1), "y":(1, 1.1)}
+            ),
+            iaa.SaltAndPepper((0.05)),
+            iaa.Add((-20, 20)),
+            iaa.GaussianBlur((0, 0.50))
+        ])
+
+def convert_train(img):
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    if np.random.randint(2) == 0:    
+        img = iaa_seq.augment_image(np.array(img))
+        img = Image.fromarray(img)
+    # img = img.resize((self.IMAGE_SCALE_SIZE, self.IMAGE_SCALE_SIZE))
+    return img
+
+class ImageAugmentaion(object):
+    def __call__(self, pic):
+        return convert_train(pic)
+
+    def __repr__(self):
+        return self.__class__.__name__+'()'
+
+transforms.ImageAugmentaion = ImageAugmentaion
+
 class Train():
     def __init__(self, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], input_scale_size=224, data_dir='/data/synthesized/model', model_save_name='model.ckpt', batch_size=64):
         self.DATA_DIR = data_dir
@@ -24,6 +53,7 @@ class Train():
         self.data_transforms = {
                                     'train': transforms.Compose([
                                         transforms.RandomCrop(32, padding=4),
+                                        transforms.ImageAugmentaion(),
                                         transforms.RandomHorizontalFlip(),
                                         transforms.ToTensor(),
                                         transforms.Normalize(self.MEAN, self.STD)
@@ -122,6 +152,7 @@ class Train():
                     best_acc = epoch_acc
                     best_model_wts = copy.deepcopy(model.state_dict())
                     torch.save(model.state_dict(), os.path.join('ckpt', self.MODEL_SAVE_NAME))
+                    print("model saved")
             print()
 
         time_elapsed = time.time() - since
