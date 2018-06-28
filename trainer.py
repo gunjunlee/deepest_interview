@@ -14,7 +14,7 @@ import imgaug as ia
 from imgaug import augmenters as iaa
 
 iaa_seq = iaa.Sequential([
-            iaa.PerspectiveTransform(scale=0.050),
+            iaa.PerspectiveTransform(scale=0.075),
             iaa.Multiply((0.8, 1.2)),
             iaa.Affine(
                 scale={"x":(1, 1.1), "y":(1, 1.1)}

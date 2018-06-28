@@ -15,25 +15,28 @@ import train
 class BasicBlock(nn.Module):
     def __init__(self, inplanes, planes, stride):
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=(1, 1), bias=False)
-        self.bn1 = nn.BatchNorm2d(planes, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
+        self.bn1 = nn.BatchNorm2d(inplanes, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
         self.relu = nn.ReLU(inplace=True)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=(3, 3), stride=(stride, stride), padding=(1, 1), bias=False)
         self.bn2 = nn.BatchNorm2d(planes, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
         self.downsample = None
         if inplanes != planes or stride != 1:
             self.downsample = nn.Sequential(
+                nn.BatchNorm2d(inplanes, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True),
+                nn.ReLU(inplace=True),
                 nn.Conv2d(inplanes, planes, kernel_size=(1, 1), stride=(stride, stride), bias=False),
-                nn.BatchNorm2d(planes, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
             )
         self.stride = stride
 
     def forward(self, x):
-        out = self.conv1(x)
-        out = self.bn1(out)
+        # pdb.set_trace()
+        out = self.bn1(x)
+        out = self.relu(out)
+        out = self.conv1(out)
+        out = self.bn2(out)
         out = self.relu(out)
         out = self.conv2(out)
-        out = self.bn2(out)
         if self.downsample is not None:
             res = self.downsample(x)
         else:
@@ -41,15 +44,15 @@ class BasicBlock(nn.Module):
         # pdb.set_trace()
         # print(out.size, res.size)
         out += res
-        out = self.relu(out)
+        # out = self.relu(out)
         return out
 
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
-        self.bn1 = nn.BatchNorm2d(64, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
+        self.bn1 = nn.BatchNorm2d(3, eps=1e-5, momentum=0.1, affine=True, track_running_stats=True)
         self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, dilation=1, ceil_mode=False)
         self.layer1 = nn.Sequential(
             BasicBlock(64, 64, 1),
@@ -82,9 +85,9 @@ class Net(nn.Module):
 
     def forward(self, x):
         # pdb.set_trace()
-        out = self.conv1(x)
-        out = self.bn1(out)
+        out = self.bn1(x)
         out = self.relu(out)
+        out = self.conv1(out)
         out = self.maxpool(out)
         out = self.layer1(out)
         out = self.layer2(out)
