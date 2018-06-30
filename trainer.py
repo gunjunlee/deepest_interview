@@ -27,7 +27,7 @@ iaa_seq = iaa.Sequential([
 def convert_train(img):
     if img.mode != 'RGB':
         img = img.convert('RGB')
-    if np.random.randint(2) == 0:    
+    if np.random.randint(2) == 0 and False:    
         img = iaa_seq.augment_image(np.array(img))
         img = Image.fromarray(img)
     # img = img.resize((self.IMAGE_SCALE_SIZE, self.IMAGE_SCALE_SIZE))
@@ -65,18 +65,19 @@ class Train():
                                 }
         self.image_datasets = {x: torchvision.datasets.CIFAR10(root='./data', train= (x=='train'),
                                         download=True, transform=self.data_transforms[x]) for x in ['train', 'test']}
-        self.dataloaders = {x: torch.utils.data.DataLoader(self.image_datasets[x], batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4) for x in ['train', 'test']}
+        self.dataloaders = {x: torch.utils.data.DataLoader(self.image_datasets[x], batch_size=self.BATCH_SIZE, shuffle=True, num_workers=6) for x in ['train', 'test']}
         self.dataset_sizes = {x: len(self.image_datasets[x]) for x in ['train', 'test']}
         self.class_names = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
         self.iaa_seq = iaa.Sequential([
-            iaa.PerspectiveTransform(scale=0.050),
-            iaa.Multiply((0.8, 1.2)),
+            iaa.PerspectiveTransform(scale=0.075),
+            iaa.Multiply((0.5, 1.5)),
             iaa.Affine(
                 scale={"x":(1, 1.1), "y":(1, 1.1)}
             ),
             iaa.SaltAndPepper((0.05)),
             iaa.Add((-20, 20)),
-            iaa.GaussianBlur((0, 0.50))
+            iaa.GaussianBlur((0, 0.50)),
+            iaa.Scale((1.0, 1.3)),
         ])
 
     def convert_train(self, img):
@@ -164,7 +165,7 @@ class Train():
         return model
 
     def load_model(self, model, ckpt_name):
-        model.load_state_dict(torch.load(os.path.join('ckpt', ckpt_name)))
+        model.load_state_dict(torch.load(os.path.join('ckpt', ckpt_name)), strict=False)
 
 if __name__ == '__main__':
     pdb.set_trace()
